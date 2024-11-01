@@ -11,6 +11,6 @@ AI_SCREENING_API_DESCRIPTION: Final = "AI-Powered Candidate Screening and Scorin
 API_V1_PREFIX: Final = "/api/v1"
 
 # DATA_PROCESSING service constants
-CANDIDATES_TAGS: Final[List[str | Enum] | None] = ["Candidates API"]
-CANDIDATES_URL: Final = "candidates"
+ENGINE_PROCESSOR_TAGS: Final[List[str | Enum] | None] = ["Engine Processor API"]
+ENGINE_PROCESSOR_URL: Final = "engine"
 

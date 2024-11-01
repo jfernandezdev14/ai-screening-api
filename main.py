@@ -8,7 +8,7 @@ from app.constants import (
     AI_SCREENING_API_DESCRIPTION,
     AI_SCREENING_API_TITLE,
 )
-from app.routers.v1 import candidates
+from app.routers.v1 import engine_processor
 from app.utils.exceptions.exceptions import IException
 
 from app.version import __version__
@@ -48,4 +48,4 @@ def health_check():
     return "ok"
 
 
-app.include_router(candidates.router)
+app.include_router(engine_processor.router)
