@@ -38,6 +38,13 @@ class MachineLearningService:
         cleaned_df_path = self.pickle_path + 'data_cleaned.pkl'
         
         if pickle_path: 
+            # Load the cleaned DataFrame (assuming it was saved)
+            if Path(cleaned_df_path).is_file():
+                cleaned_df = pd.read_pickle(self.pickle_path +'data_cleaned.pkl')
+                self.cleaned_df = cleaned_df
+            else :
+                self.data_ingestion_process(self.pickle_path)
+            
             # Load the trained models and vectorizer
             if Path(nn_model_path).is_file():
                 with open(nn_model_path, 'rb') as file:
@@ -64,10 +71,7 @@ class MachineLearningService:
             
                 self.tfidf_vectorizer = tfidf_vectorizer
 
-            # Load the cleaned DataFrame (assuming it was saved)
-            if Path(cleaned_df_path).is_file():
-                cleaned_df = pd.read_pickle(self.pickle_path +'data_cleaned.pkl')
-                self.cleaned_df = cleaned_df
+            
 
     def load_model(self):
         self.data_ingestion_process(self.pickle_path)
@@ -122,7 +126,7 @@ class MachineLearningService:
         
         # Save the cleaned DataFrame to a pickle file
         df_clean = df[['job title', 'headline', 'summary', 'keywords', 'educations', 'experiences', 'skills', 'candidate_profile', 'disqualified']]
-        df_clean.to_pickle('./db/data_cleaned.pkl')
+        df_clean.to_pickle(self.pickle_path+ 'data_cleaned.pkl')
         self.cleaned_df = df_clean
 
     def save_tfidf_vectorizer(self, vectorizer):
@@ -353,9 +357,9 @@ class MachineLearningService:
         # best_model, _ = self._predict_best_model(input_data)
 
         # Get related rows
-        related_rows = self._get_related_rows(input_data, self.cleaned_df, self.tfidf_vectorizer, self.model_selected)
-
-        result = related_rows.to_dict()
+        related_rows = self._get_related_rows(input_data, self.cleaned_df, self.tfidf_vectorizer, self.models_mapping[self.model_selected])
+        related_rows.replace("nan", np.nan, inplace=True)
+        result = related_rows.fillna("").to_dict(orient="records")
 
         return result
     
@@ -463,7 +467,7 @@ class MachineLearningService:
         cleaned_df['prediction'] = predictions
 
         # Sort by similarity score and return the top 30 rows
-        top_related_rows = cleaned_df.sort_values(by='normalized_prediction_score', ascending=False).head(30)
+        top_related_rows: pd.DataFrame = cleaned_df.sort_values(by='normalized_prediction_score', ascending=False).head(30)
 
         return top_related_rows
 
