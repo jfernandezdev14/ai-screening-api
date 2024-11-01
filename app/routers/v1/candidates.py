@@ -5,8 +5,6 @@ from fastapi import (
     status,
 )
 from typing import List
-
-from app.config import settings
 from app.constants import (
     CANDIDATES_TAGS,
     CANDIDATES_URL, API_V1_PREFIX
@@ -42,13 +40,10 @@ async def process_candidates() -> None:
     response_model_by_alias=False,
 )
 async def create_candidate(files: List[UploadFile] = File(...)):
-
-    # Save the uploaded file
-    file_location = os.path.join(settings.FILES_DIRECTORY, file.filename)
-    with open(file_location, "wb") as f:
-        f.write(await file.read())
+    ml_service = MachineLearningService()
+    await ml_service.process_data_files(files)
     
-    return {"info": f"File '{file.filename}' has been uploaded successfully."}
+    return {"info": f"Files has been uploaded successfully."}
 
 
 @router.get(
@@ -61,7 +56,6 @@ async def create_candidate(files: List[UploadFile] = File(...)):
 async def find_candidates() -> None:
 
     ml_service = MachineLearningService("./db/data.csv")
-    ml
     ml_service.load("./db/data.csv")
 
     return True
