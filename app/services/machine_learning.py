@@ -23,7 +23,7 @@ import pickle
 
 
 class MachineLearningService:
-    def __init__(self, pickle_path=None, model_name="random_forest"):
+    def __init__(self, pickle_path=None, model_name="random_forest", training=False):
         self.model_selected = model_name
         self.pickle_path = pickle_path
         self.nlp_model = spacy.load('en_core_web_md')
@@ -37,6 +37,9 @@ class MachineLearningService:
         tfidf_vectorizer_path = self.pickle_path + 'tfidf_vectorizer.pkl'
         cleaned_df_path = self.pickle_path + 'data_cleaned.pkl'
         
+        if training:
+            return
+
         if pickle_path: 
             # Load the cleaned DataFrame (assuming it was saved)
             if Path(cleaned_df_path).is_file():
