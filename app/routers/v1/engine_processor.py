@@ -30,10 +30,10 @@ router = APIRouter(prefix=API_V1_PREFIX + "/" + ENGINE_PROCESSOR_URL, tags=ENGIN
 )
 async def create_engine_processor_model() -> None:
 
-    ml_service = MachineLearningService(settings.FILES_DIRECTORY)
+    ml_service = MachineLearningService(settings.FILES_DIRECTORY, training=True)
     ml_service.load_model()
 
-    return True
+    return JSONResponse(content={"message": "Model trained successfully"})
 
 
 @router.post(

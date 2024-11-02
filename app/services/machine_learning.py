@@ -1,6 +1,7 @@
 import os
 from typing import List
 import uuid
+from PyPDF2 import PdfReader
 from fastapi import File, UploadFile
 from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -15,15 +16,13 @@ from sklearn.metrics import mean_squared_error
 from app.config import settings
 import pandas as pd
 import numpy as np
-import fitz
-import re
 import spacy
 import pickle
 
 
 
 class MachineLearningService:
-    def __init__(self, pickle_path=None, model_name="random_forest"):
+    def __init__(self, pickle_path=None, model_name="random_forest", training=False):
         self.model_selected = model_name
         self.pickle_path = pickle_path
         self.nlp_model = spacy.load('en_core_web_md')
@@ -37,7 +36,17 @@ class MachineLearningService:
         tfidf_vectorizer_path = self.pickle_path + 'tfidf_vectorizer.pkl'
         cleaned_df_path = self.pickle_path + 'data_cleaned.pkl'
         
+        if training:
+            return
+
         if pickle_path: 
+            # Load the cleaned DataFrame (assuming it was saved)
+            if Path(cleaned_df_path).is_file():
+                cleaned_df = pd.read_pickle(self.pickle_path +'data_cleaned.pkl')
+                self.cleaned_df = cleaned_df
+            else :
+                self.data_ingestion_process(self.pickle_path)
+
             # Load the trained models and vectorizer
             if Path(nn_model_path).is_file():
                 with open(nn_model_path, 'rb') as file:
@@ -64,18 +73,13 @@ class MachineLearningService:
             
                 self.tfidf_vectorizer = tfidf_vectorizer
 
-            # Load the cleaned DataFrame (assuming it was saved)
-            if Path(cleaned_df_path).is_file():
-                cleaned_df = pd.read_pickle(self.pickle_path +'data_cleaned.pkl')
-                self.cleaned_df = cleaned_df
-
     def load_model(self):
         self.data_ingestion_process(self.pickle_path)
 
     def data_ingestion_process(self, path):
         
         # Load the data from the XLSX file
-        df = pd.read_excel('./db/data.xlsx', index_col=0)
+        df = pd.read_excel('./db/data.xlsx')
         
         # Preprocess the data
         df = self.preprocess_dataframe(df)
@@ -121,8 +125,8 @@ class MachineLearningService:
     def save_cleaned_dataframe(self, df):
         
         # Save the cleaned DataFrame to a pickle file
-        df_clean = df[['job title', 'headline', 'summary', 'keywords', 'educations', 'experiences', 'skills', 'candidate_profile', 'disqualified']]
-        df_clean.to_pickle('./db/data_cleaned.pkl')
+        df_clean = df[['name','job title', 'headline', 'summary', 'keywords', 'educations', 'experiences', 'skills', 'candidate_profile', 'disqualified']]
+        df_clean.to_pickle(self.pickle_path+ 'data_cleaned.pkl')
         self.cleaned_df = df_clean
 
     def save_tfidf_vectorizer(self, vectorizer):
@@ -171,7 +175,7 @@ class MachineLearningService:
         df.columns = df.columns.str.lower()
 
         #Drop rows with missing values
-        df = df[['job title', 'headline', 'summary', 'keywords', 'educations','experiences', 'skills', 'disqualified']]
+        df = df[['name','job title', 'headline', 'summary', 'keywords', 'educations','experiences', 'skills', 'disqualified']]
 
         #Map the values of the Disqualified column to 1 and 0
         order = {"Yes": 1, "No": 0}
@@ -353,9 +357,11 @@ class MachineLearningService:
         # best_model, _ = self._predict_best_model(input_data)
 
         # Get related rows
-        related_rows = self._get_related_rows(input_data, self.cleaned_df, self.tfidf_vectorizer, self.model_selected)
-
-        result = related_rows.to_dict()
+        related_rows = self._get_related_rows(input_data, self.cleaned_df, self.tfidf_vectorizer, self.models_mapping[self.model_selected])
+        related_rows.replace("nan", "", inplace=True)
+        related_rows["job_tile"] = related_rows["job title"]
+        related_rows.drop(columns=["job title"], inplace=True)
+        result = related_rows.fillna("").to_dict(orient="records")
 
         return result
     
@@ -381,16 +387,16 @@ class MachineLearningService:
         return cleaned_text
     
 
-    def _extract_text_from_pdf(self,pdf_file):
-
+    def _extract_text_from_pdf(self, pdf_file):
         text = []
-        with fitz.open(pdf_file) as pdf:
-            for page_num in range(0, pdf.page_count):
-                page = pdf[page_num]
-                text.append(page.get_text().replace("\n", " ").lower())
-            
+        pdf = PdfReader(pdf_file)
+        
+        for page_num in range(len(pdf.pages)):
+            page = pdf.pages[page_num]
+            text.append(page.extract_text().replace("\n", " ").lower())
+        
         full_text = " ".join(text)
-            
+        
         return full_text
         
     def _clean_text(self, text):
@@ -463,7 +469,7 @@ class MachineLearningService:
         cleaned_df['prediction'] = predictions
 
         # Sort by similarity score and return the top 30 rows
-        top_related_rows = cleaned_df.sort_values(by='normalized_prediction_score', ascending=False).head(30)
+        top_related_rows: pd.DataFrame = cleaned_df.sort_values(by='normalized_prediction_score', ascending=False).head(30)
 
         return top_related_rows
 

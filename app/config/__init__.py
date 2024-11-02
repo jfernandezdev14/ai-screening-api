@@ -11,12 +11,7 @@ class ServerSettings(BaseSettings):
     PORT: int = 8000
 
 class FileSettings(BaseSettings):
-    FILES_DIRECTORY: str = "./db"
-
-
-# class DatabaseSettings(BaseSettings):
-#     DB_URL: str
-#     DB_NAME: str
+    FILES_DIRECTORY: str = "./db/"
 
 class Settings(CommonSettings, ServerSettings, FileSettings):
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
