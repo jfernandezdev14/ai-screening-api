@@ -82,7 +82,7 @@ class MachineLearningService:
     def data_ingestion_process(self, path):
         
         # Load the data from the XLSX file
-        df = pd.read_excel('./db/data.xlsx', index_col=0)
+        df = pd.read_excel('./db/data.xlsx')
         
         # Preprocess the data
         df = self.preprocess_dataframe(df)
@@ -128,7 +128,7 @@ class MachineLearningService:
     def save_cleaned_dataframe(self, df):
         
         # Save the cleaned DataFrame to a pickle file
-        df_clean = df[['job title', 'headline', 'summary', 'keywords', 'educations', 'experiences', 'skills', 'candidate_profile', 'disqualified']]
+        df_clean = df[['name','job title', 'headline', 'summary', 'keywords', 'educations', 'experiences', 'skills', 'candidate_profile', 'disqualified']]
         df_clean.to_pickle(self.pickle_path+ 'data_cleaned.pkl')
         self.cleaned_df = df_clean
 
@@ -178,7 +178,7 @@ class MachineLearningService:
         df.columns = df.columns.str.lower()
 
         #Drop rows with missing values
-        df = df[['job title', 'headline', 'summary', 'keywords', 'educations','experiences', 'skills', 'disqualified']]
+        df = df[['name','job title', 'headline', 'summary', 'keywords', 'educations','experiences', 'skills', 'disqualified']]
 
         #Map the values of the Disqualified column to 1 and 0
         order = {"Yes": 1, "No": 0}
@@ -361,7 +361,9 @@ class MachineLearningService:
 
         # Get related rows
         related_rows = self._get_related_rows(input_data, self.cleaned_df, self.tfidf_vectorizer, self.models_mapping[self.model_selected])
-        related_rows.replace("nan", np.nan, inplace=True)
+        related_rows.replace("nan", "", inplace=True)
+        related_rows["job_tile"] = related_rows["job title"]
+        related_rows.drop(columns=["job title"], inplace=True)
         result = related_rows.fillna("").to_dict(orient="records")
 
         return result

@@ -2,6 +2,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.constants import (
@@ -21,6 +22,22 @@ app = FastAPI(
     description=AI_SCREENING_API_DESCRIPTION,
     version=__version__,
     swagger_ui_parameters={"defaultModelsExpandDepth": -1},
+)
+
+# Define the list of allowed origins
+origins = [
+    "http://localhost:3000",  # Replace with your frontend URL
+    "http://127.0.0.1:3000",
+    # Add more origins as needed
+]
+
+# Add CORS middleware to the application
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Allow the specified origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 
