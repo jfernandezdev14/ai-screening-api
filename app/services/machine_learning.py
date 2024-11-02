@@ -1,6 +1,7 @@
 import os
 from typing import List
 import uuid
+from PyPDF2 import PdfReader
 from fastapi import File, UploadFile
 from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -15,8 +16,6 @@ from sklearn.metrics import mean_squared_error
 from app.config import settings
 import pandas as pd
 import numpy as np
-import fitz
-import re
 import spacy
 import pickle
 
@@ -390,16 +389,16 @@ class MachineLearningService:
         return cleaned_text
     
 
-    def _extract_text_from_pdf(self,pdf_file):
-
+    def _extract_text_from_pdf(self, pdf_file):
         text = []
-        with fitz.open(pdf_file) as pdf:
-            for page_num in range(0, pdf.page_count):
-                page = pdf[page_num]
-                text.append(page.get_text().replace("\n", " ").lower())
-            
+        pdf = PdfReader(pdf_file)
+        
+        for page_num in range(len(pdf.pages)):
+            page = pdf.pages[page_num]
+            text.append(page.extract_text().replace("\n", " ").lower())
+        
         full_text = " ".join(text)
-            
+        
         return full_text
         
     def _clean_text(self, text):
