@@ -40,7 +40,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-
 # @app.on_event("startup")
 # async def startup_db_client():
 #     app.mongodb_client = AsyncIOMotorClient(settings.DB_URL, tls=True, tlsAllowInvalidCertificates=True)

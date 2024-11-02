@@ -46,7 +46,7 @@ class MachineLearningService:
                 self.cleaned_df = cleaned_df
             else :
                 self.data_ingestion_process(self.pickle_path)
-            
+
             # Load the trained models and vectorizer
             if Path(nn_model_path).is_file():
                 with open(nn_model_path, 'rb') as file:
@@ -72,8 +72,6 @@ class MachineLearningService:
                     tfidf_vectorizer = pickle.load(file)
             
                 self.tfidf_vectorizer = tfidf_vectorizer
-
-            
 
     def load_model(self):
         self.data_ingestion_process(self.pickle_path)
